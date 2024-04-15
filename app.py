@@ -9,9 +9,13 @@ def clean_sizes_column(df, size_col='Size'):
     return df
 
 def pivot_sizes(df):
-    """Trasforma le righe dei valori 'Size' in colonne e raggruppa i dati."""
+    """Trasforma le righe dei valori 'Size' in colonne, ordina le colonne come specificato, e rimuove 'Image'."""
     # Pulizia dei valori 'Size'
     df = clean_sizes_column(df)
+    
+    # Rimozione della colonna 'Image' se esiste
+    if 'Image' in df.columns:
+        df.drop('Image', axis=1, inplace=True)
     
     # Creazione del DataFrame pivotato
     df_pivot = df.pivot_table(index=["Season", "Color", "Style Number", "Name"], 
@@ -28,20 +32,20 @@ def pivot_sizes(df):
     # Rimozione delle colonne delle taglie che contengono solo valori null
     df_pivot.dropna(axis=1, how='all', inplace=True)
 
-    # Ordina le colonne delle taglie mantenendo tutte quelle definite, e mettendo alla fine le non definite
+    # Definizione dell'ordine delle taglie
     predefined_size_order = ["OS", "O/S", "ONE SIZE", "UNI", "XXXS", "XXS", "XS", "XS/S", "S", "S/M", "M", 
                              "M/L", "L", "L/XL", "XL", "XXL", "XXXL"]
-    all_sizes = [col for col in df_pivot.columns if col not in df.columns.difference(['Size', 'Qty']).tolist()]
+    size_columns = [col for col in df_pivot.columns if col not in df.columns]
 
-    # Dividi le taglie in definite e non definite
-    predefined_sizes = [size for size in predefined_size_order if size in all_sizes]
-    undefined_sizes = [size for size in all_sizes if size not in predefined_size_order]
+    # Ordinamento delle colonne delle taglie
+    predefined_sizes = [size for size in predefined_size_order if size in size_columns]
+    undefined_sizes = [size for size in size_columns if size not in predefined_size_order]
 
-    # Ordina le taglie non definite numericamente dove possibile
+    # Dividi ulteriormente undefined_sizes in numeriche e non numeriche e ordina
     numeric_sizes = sorted([size for size in undefined_sizes if size.isdigit()], key=int)
     non_numeric_sizes = sorted([size for size in undefined_sizes if not size.isdigit()])
 
-    # Crea l'ordine finale delle taglie
+    # Ordine finale delle taglie
     final_size_order = predefined_sizes + non_numeric_sizes + numeric_sizes
 
     # Unione del pivot con le altre colonne non pivotate
@@ -49,9 +53,18 @@ def pivot_sizes(df):
     df_final = pd.merge(df[non_pivot_cols].drop_duplicates(), df_pivot, 
                         on=["Season", "Color", "Style Number", "Name"], how='right')
 
-    # Organizzare le colonne nel seguente ordine: non pivot, seguite dalle taglie ordinate
-    ordered_columns = non_pivot_cols + final_size_order
-    df_final = df_final[ordered_columns]
+    # Predefinire l'ordine delle colonne principali
+    main_cols_order = ["Season", "Color", "Style Number", "Name", "Wholesale (EUR)", 
+                       "M.S.R.P. (EUR)", "Division", "Department", "Category", "Subcategory", 
+                       "Product Notes", "Ship Start", "Ship End", "Prebook", "Country of Origin", 
+                       "Fabric Description", "Total Price (EUR)", "Total Units"]
+    
+    ordered_main_cols = [col for col in main_cols_order if col in df_final.columns]  # Filtra le colonne disponibili
+    additional_cols = [col for col in non_pivot_cols if col not in main_cols_order and col in df_final.columns]
+
+    # Organizzare le colonne: colonne principali ordinate, seguite dalle taglie, poi le colonne extra
+    final_columns = ordered_main_cols + additional_cols + final_size_order
+    df_final = df_final[final_columns]
 
     return df_final
 
