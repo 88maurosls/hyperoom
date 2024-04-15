@@ -113,9 +113,7 @@ uploaded_file = st.file_uploader("Carica il tuo file Excel", type=['xlsx'])
 if uploaded_file is not None:
     df = load_data(uploaded_file)
     if not df.empty:
-        st.write("Anteprima dei dati originali:", df)
         df_final = pivot_sizes(df)
-        st.write("Anteprima dei dati trasformati:", df_final)
         df_final = convert_excel_dates(df_final)  # Converte le date nel formato corretto
         processed_data, processed_file_name = convert_df_to_excel(df_final, uploaded_file.name)
         st.download_button(
