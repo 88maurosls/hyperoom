@@ -107,7 +107,7 @@ def convert_excel_dates(df):
         df[col] = pd.to_datetime(df[col], unit='d').dt.strftime('%Y-%m-%d')
     return df
 
-st.title('Applicazione per la trasposizione e raggruppamento dei dati Excel')
+st.title('Hyperoom > Excel v2.2')
 
 uploaded_file = st.file_uploader("Carica il tuo file Excel", type=['xlsx'])
 if uploaded_file is not None:
