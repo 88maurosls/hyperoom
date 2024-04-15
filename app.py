@@ -89,7 +89,10 @@ def pivot_sizes(df):
 
 def convert_excel_date(serial):
     """Converte il numero di serie Excel in una data."""
-    return (datetime(1899, 12, 30) + timedelta(days=serial)).strftime('%Y-%m-%d')
+    try:
+        return (datetime(1899, 12, 30) + timedelta(days=int(serial))).strftime('%Y-%m-%d')
+    except (ValueError, TypeError):
+        return None
 
 def convert_df_to_excel(df):
     """Converti il DataFrame in un oggetto Excel e restituisci il buffer."""
