@@ -8,25 +8,33 @@ def clean_sizes_column(df, size_col='Size'):
     df[size_col] = df[size_col].apply(lambda x: re.sub(r'Sizes$', '', str(x).strip()))
     return df
 
-def pivot_sizes(df, size_col='Size', qty_col='Qty'):
+def pivot_sizes(df):
     """Trasforma le righe dei valori 'Size' in colonne e raggruppa i dati."""
-    # Pulizia dei valori 'Size'
-    df = clean_sizes_column(df, size_col)
-
-    # Raggruppa e prepara le colonne per il pivot, escludendo 'Size' e 'Qty'
-    cols_to_keep = df.columns.difference([size_col, qty_col, df.index.name]).tolist()
-    df_pivot = (df.set_index(cols_to_keep+[size_col])
-                  .pivot_table(index=cols_to_keep, 
-                               columns=size_col, 
-                               values=qty_col, 
-                               aggfunc='sum', 
-                               fill_value=0)
-                  .reset_index())
+    # Pulizia dei valori 'Size' e preparazione per il pivot
+    df = clean_sizes_column(df)
     
-    # Combina i nomi delle colonne multi-livello in uno
-    df_pivot.columns = [' '.join(col).strip() if type(col) is tuple else col for col in df_pivot.columns.values]
+    # Identificazione delle colonne che non saranno trasformate
+    non_pivot_cols = df.columns.difference(['Size', 'Qty']).tolist()
+    
+    # Mantenimento di una copia delle colonne che non partecipano al pivot
+    df_non_pivot = df[non_pivot_cols].drop_duplicates()
+    
+    # Creazione di un nuovo DataFrame con i valori 'Qty' per ogni 'Size' trasposti in colonne
+    df_pivot = df.pivot_table(index=["Season", "Color", "Style Number", "Name"], 
+                              columns='Size', 
+                              values='Qty', 
+                              aggfunc='sum', 
+                              fill_value=0).reset_index()
+    
+    # Unione del pivot con le altre colonne non pivotate
+    df_final = df_pivot.merge(df_non_pivot, on=["Season", "Color", "Style Number", "Name"], how='left')
 
-    return df_pivot
+    # Rinomina le colonne per un formato pulito
+    df_final.columns.name = None
+    df_final.reset_index(drop=True, inplace=True)
+    
+    return df_final
+
 
 def convert_df_to_excel(df):
     """Converti il DataFrame in un oggetto Excel e restituisci il buffer."""
