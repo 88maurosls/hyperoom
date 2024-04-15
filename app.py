@@ -21,6 +21,10 @@ def load_data(file_path):
     """Carica i dati da un file Excel specificato."""
     return pd.read_excel(file_path)
 
+def filter_qty(df, qty_column='Qty'):
+    """Filtro le righe basate sulla colonna 'Qty' per escludere valori nulli o zero."""
+    return df[df[qty_column].notna() & (df[qty_column] != 0)]
+
 st.title('Applicazione per l\'estrazione e pulizia dei dati Excel')
 
 uploaded_file = st.file_uploader("Carica il tuo file Excel", type=['xlsx'])
@@ -29,8 +33,9 @@ if uploaded_file is not None:
     if not df.empty:
         st.write("Anteprima dei dati originali:", df)
         df_cleaned = clean_sizes_column(df)
-        st.write("Anteprima dei dati puliti:", df_cleaned)
-        processed_data = convert_df_to_excel(df_cleaned)
+        df_filtered = filter_qty(df_cleaned)  # Filtra le righe dove 'Qty' è null o zero
+        st.write("Anteprima dei dati puliti:", df_filtered)
+        processed_data = convert_df_to_excel(df_filtered)
         st.download_button(
             label="📥 Scarica dati Excel puliti",
             data=processed_data,
