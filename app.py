@@ -13,9 +13,6 @@ def pivot_sizes(df):
     # Pulizia dei valori 'Size'
     df = clean_sizes_column(df)
     
-    # Identificazione delle colonne che non saranno trasformate
-    non_pivot_cols = df.columns.difference(['Size', 'Qty']).tolist()
-
     # Creazione del DataFrame pivotato
     df_pivot = df.pivot_table(index=["Season", "Color", "Style Number", "Name"], 
                               columns='Size', 
@@ -27,15 +24,29 @@ def pivot_sizes(df):
 
     # Sostituzione degli zeri con NaN (o puoi usare None per null)
     df_pivot.replace({0: None}, inplace=True)
-    
-    # Unione del pivot con le altre colonne non pivotate mantenendo l'ordine delle colonne originale
-    df_final = pd.merge(df[non_pivot_cols].drop_duplicates(), df_pivot, on=["Season", "Color", "Style Number", "Name"], how='right')
 
-    # Ordina le colonne mettendo le colonne delle taglie alla fine
-    final_columns = non_pivot_cols + list(df_pivot.columns.difference(non_pivot_cols))
-    df_final = df_final[final_columns]
+    # Stabilire l'ordine desiderato per le taglie
+    size_order = ["OS", "O/S", "ONE SIZE", "UNI", "XXXS", "XXS", "XS", "XS/S", "S", "S/M", "M", 
+                  "M/L", "L", "L/XL", "XL", "XXL", "XXXL"]
+
+    # Separare le colonne di taglie in due gruppi: numeriche e non numeriche
+    numeric_sizes = [col for col in df_pivot.columns if col not in size_order and col.isdigit()]
+    numeric_sizes.sort(key=int)  # Ordina le taglie numeriche in ordine crescente
+    
+    non_numeric_sizes = [col for col in df_pivot.columns if col in size_order]
+    non_numeric_sizes.sort(key=lambda x: size_order.index(x))  # Ordina secondo size_order definito
+
+    # Unione del pivot con le altre colonne non pivotate
+    non_pivot_cols = df.columns.difference(['Size', 'Qty']).tolist()
+    df_final = pd.merge(df[non_pivot_cols].drop_duplicates(), df_pivot, 
+                        on=["Season", "Color", "Style Number", "Name"], how='right')
+
+    # Organizzare le colonne nel seguente ordine: non numeriche, numeriche, tutto il resto
+    ordered_columns = non_pivot_cols + non_numeric_sizes + numeric_sizes
+    df_final = df_final[ordered_columns]
 
     return df_final
+
 
 
 
