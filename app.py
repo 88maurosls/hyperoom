@@ -91,8 +91,23 @@ def convert_df_to_excel(df):
     output = BytesIO()
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
         df.to_excel(writer, index=False, sheet_name='Sheet1')
+
+        # Ottieni il foglio di lavoro
+        worksheet = writer.sheets['Sheet1']
+
+        # Imposta il formato per le colonne contenenti le date (se presenti)
+        date_columns = ['Ship Start', 'Ship End']  # Aggiungi altre colonne data se necessario
+        date_format = 'YYYY-MM-DD'  # Formato data desiderato
+        for col in date_columns:
+            if col in df.columns:
+                # Trova l'indice della colonna
+                col_index = df.columns.get_loc(col) + 1  # +1 perché l'indice di colonna in Excel parte da 1
+                # Imposta il formato della data per la colonna
+                worksheet.column_dimensions[chr(64 + col_index)].number_format = date_format
+
     output.seek(0)
     return output.getvalue()
+
 
 def load_data(file_path):
     """Carica i dati da un file Excel specificato."""
