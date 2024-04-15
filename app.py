@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 from io import BytesIO
-from datetime import datetime, timedelta
 import re
 
 def clean_sizes_column(df, size_col='Size'):
@@ -87,37 +86,13 @@ def pivot_sizes(df):
 
     return df_final
 
-def convert_excel_date(serial):
-    """Converte il numero di serie Excel in una data."""
-    try:
-        return (datetime(1899, 12, 30) + timedelta(days=int(serial))).strftime('%Y-%m-%d')
-    except (ValueError, TypeError):
-        return None
-
 def convert_df_to_excel(df):
     """Converti il DataFrame in un oggetto Excel e restituisci il buffer."""
     output = BytesIO()
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
         df.to_excel(writer, index=False, sheet_name='Sheet1')
-
-        # Ottieni il foglio di lavoro
-        worksheet = writer.sheets['Sheet1']
-
-        # Imposta il formato per le colonne contenenti le date (se presenti)
-        date_columns = ['Ship Start', 'Ship End']  # Aggiungi altre colonne data se necessario
-        for col in date_columns:
-            if col in df.columns:
-                # Trova l'indice della colonna
-                col_index = df.columns.get_loc(col) + 1  # +1 perché l'indice di colonna in Excel parte da 1
-                # Imposta il formato della data per la colonna
-                worksheet.column_dimensions[chr(64 + col_index)].number_format = 'yyyy-mm-dd'
-
-                # Converte i numeri seriali Excel in date nel DataFrame
-                df[col] = df[col].apply(convert_excel_date)
-
     output.seek(0)
     return output.getvalue()
-
 
 def load_data(file_path):
     """Carica i dati da un file Excel specificato."""
