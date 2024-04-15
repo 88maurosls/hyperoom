@@ -15,8 +15,9 @@ def clean_style_number(df):
 
 def pivot_sizes(df):
     """Trasforma le righe dei valori 'Size' in colonne, ordina le colonne come specificato, e rimuove 'Image'."""
-    # Pulizia dei valori 'Size'
+    # Pulizia dei valori 'Size' e 'Style Number'
     df = clean_sizes_column(df)
+    df = clean_style_number(df)
     
     # Rimozione della colonna 'Image' se esiste
     if 'Image' in df.columns:
@@ -38,7 +39,7 @@ def pivot_sizes(df):
     df_pivot.dropna(axis=1, how='all', inplace=True)
 
     # Definizione dell'ordine delle taglie
-    predefined_size_order = ["OS", "O/S", "One size", "UNI", "XXXS", "XXS", "XXS/XS", "XS", "XS/S", "S", "S/M", "M", 
+    predefined_size_order = ["OS", "O/S", "ONE SIZE", "UNI", "XXXS", "XXS", "XS", "XS/S", "S", "S/M", "M", 
                              "M/L", "L", "L/XL", "XL", "XXL", "XXXL"]
     size_columns = [col for col in df_pivot.columns if col not in df.columns]
 
@@ -72,7 +73,6 @@ def pivot_sizes(df):
     df_final = df_final[final_columns]
 
     return df_final
-
 
 def convert_df_to_excel(df):
     """Converti il DataFrame in un oggetto Excel e restituisci il buffer."""
