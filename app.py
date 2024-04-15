@@ -87,14 +87,14 @@ def pivot_sizes(df):
 
     return df_final
 
-def convert_df_to_excel(df):
+def convert_df_to_excel(df, file_name):
     """Converti il DataFrame in un oggetto Excel e restituisci il buffer."""
     output = BytesIO()
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
         df.to_excel(writer, index=False, sheet_name='Sheet1', float_format="%.2f", na_rep='')
     output.seek(0)
-    return output.getvalue()
-
+    processed_file_name = file_name.split('.')[0] + '_processed.xlsx'
+    return output.getvalue(), processed_file_name
 
 def load_data(file_path):
     """Carica i dati da un file Excel specificato."""
@@ -107,19 +107,21 @@ def convert_excel_dates(df):
         df[col] = pd.to_datetime(df[col], unit='d').dt.strftime('%Y-%m-%d')
     return df
 
-st.title('Hyperoom to Excel v2.1 BETA')
+st.title('Applicazione per la trasposizione e raggruppamento dei dati Excel')
 
 uploaded_file = st.file_uploader("Carica il tuo file Excel", type=['xlsx'])
 if uploaded_file is not None:
     df = load_data(uploaded_file)
     if not df.empty:
+        st.write("Anteprima dei dati originali:", df)
         df_final = pivot_sizes(df)
+        st.write("Anteprima dei dati trasformati:", df_final)
         df_final = convert_excel_dates(df_final)  # Converte le date nel formato corretto
-        processed_data = convert_df_to_excel(df_final)
+        processed_data, processed_file_name = convert_df_to_excel(df_final, uploaded_file.name)
         st.download_button(
             label="📥 Scarica dati Excel trasformati",
             data=processed_data,
-            file_name='dati_trasformati.xlsx',
+            file_name=processed_file_name,
             mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
     else:
