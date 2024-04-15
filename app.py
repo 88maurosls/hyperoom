@@ -8,6 +8,11 @@ def clean_sizes_column(df, size_col='Size'):
     df[size_col] = df[size_col].apply(lambda x: re.sub(r'Sizes$', '', str(x).strip()))
     return df
 
+def clean_style_number(df):
+    """Rimuove il trattino finale dalla colonna 'Style Number' se presente."""
+    df['Style Number'] = df['Style Number'].str.rstrip('-')
+    return df
+
 def pivot_sizes(df):
     """Trasforma le righe dei valori 'Size' in colonne, ordina le colonne come specificato, e rimuove 'Image'."""
     # Pulizia dei valori 'Size'
