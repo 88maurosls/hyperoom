@@ -25,6 +25,10 @@ def filter_qty(df, qty_column='Qty'):
     """Filtro le righe basate sulla colonna 'Qty' per escludere valori nulli o zero."""
     return df[df[qty_column].notna() & (df[qty_column] != 0)]
 
+def remove_column(df, col_name='Image'):
+    """Rimuove una colonna specificata dal DataFrame."""
+    return df.drop(columns=[col_name], errors='ignore')
+
 st.title('Applicazione per l\'estrazione e pulizia dei dati Excel')
 
 uploaded_file = st.file_uploader("Carica il tuo file Excel", type=['xlsx'])
@@ -34,8 +38,9 @@ if uploaded_file is not None:
         st.write("Anteprima dei dati originali:", df)
         df_cleaned = clean_sizes_column(df)
         df_filtered = filter_qty(df_cleaned)  # Filtra le righe dove 'Qty' è null o zero
-        st.write("Anteprima dei dati puliti:", df_filtered)
-        processed_data = convert_df_to_excel(df_filtered)
+        df_final = remove_column(df_filtered)  # Rimuovi la colonna 'Image'
+        st.write("Anteprima dei dati puliti:", df_final)
+        processed_data = convert_df_to_excel(df_final)
         st.download_button(
             label="📥 Scarica dati Excel puliti",
             data=processed_data,
