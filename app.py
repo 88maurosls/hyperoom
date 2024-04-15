@@ -1,12 +1,13 @@
 import streamlit as st
 import pandas as pd
 from io import BytesIO
+import re
 
 def clean_sizes_column(df, column_name='Sizes'):
     # Assicurati che la colonna esista nel DataFrame
     if column_name in df.columns:
-        # Rimuovi la parola "Sizes" se è alla fine dei valori della colonna
-        df[column_name] = df[column_name].apply(lambda x: x[:-5].strip() if str(x).endswith('Sizes') else x.strip())
+        # Utilizza espressioni regolari per rimuovere 'Sizes' esattamente alla fine della stringa
+        df[column_name] = df[column_name].apply(lambda x: re.sub(r'Sizes$', '', str(x).strip()))
     return df
 
 def convert_df_to_excel(df):
@@ -22,7 +23,7 @@ uploaded_file = st.file_uploader("Carica il tuo file Excel", type=['xlsx'])
 if uploaded_file is not None:
     df = pd.read_excel(uploaded_file)
     if not df.empty:
-        df = clean_sizes_column(df)  # Pulisci la colonna Sizes per rimuovere "Sizes" alla fine
+        df = clean_sizes_column(df)  # Pulisci la colonna Sizes per rimuovere 'Sizes' alla fine
         st.write("Anteprima dei dati corretti:", df)
         processed_data = convert_df_to_excel(df)  # Converti il DataFrame pulito in Excel
         
