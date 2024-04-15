@@ -3,32 +3,29 @@ import pandas as pd
 from io import BytesIO
 import re
 
-def clean_sizes_column(df):
+def clean_sizes_column(df, size_col='Size'):
     """Rimuove 'Sizes' alla fine dei valori nella colonna 'Size'."""
-    df['Size'] = df['Size'].apply(lambda x: re.sub(r'Sizes$', '', str(x).strip()))
+    df[size_col] = df[size_col].apply(lambda x: re.sub(r'Sizes$', '', str(x).strip()))
     return df
 
-def pivot_sizes(df, index_cols, values_col='Qty'):
+def pivot_sizes(df, size_col='Size', qty_col='Qty'):
     """Trasforma le righe dei valori 'Size' in colonne e raggruppa i dati."""
-    # Pulizia dei valori 'Size' e preparazione per il pivot
-    df = clean_sizes_column(df)
+    # Pulizia dei valori 'Size'
+    df = clean_sizes_column(df, size_col)
 
-    # Trova tutte le colonne che non sono 'Size' o 'Qty' e che non fanno parte delle colonne d'indice
-    other_cols = df.columns.difference(index_cols + ['Size', values_col]).tolist()
+    # Raggruppa e prepara le colonne per il pivot, escludendo 'Size' e 'Qty'
+    cols_to_keep = df.columns.difference([size_col, qty_col, df.index.name]).tolist()
+    df_pivot = (df.set_index(cols_to_keep+[size_col])
+                  .pivot_table(index=cols_to_keep, 
+                               columns=size_col, 
+                               values=qty_col, 
+                               aggfunc='sum', 
+                               fill_value=0)
+                  .reset_index())
     
-    # Creazione del pivot table
-    df_pivot = df.pivot_table(index=index_cols, 
-                              columns='Size', 
-                              values=values_col, 
-                              aggfunc='sum', 
-                              fill_value=0).reset_index()
+    # Combina i nomi delle colonne multi-livello in uno
+    df_pivot.columns = [' '.join(col).strip() if type(col) is tuple else col for col in df_pivot.columns.values]
 
-    # Concatenazione con le altre colonne
-    df_pivot = df_pivot.join(df.set_index(index_cols)[other_cols].drop_duplicates())
-
-    # Riassembla il multiindex nel nome delle colonne per le colonne pivotate
-    df_pivot.columns = ['_'.join(col).rstrip('_') if isinstance(col, tuple) else col for col in df_pivot.columns.values]
-    
     return df_pivot
 
 def convert_df_to_excel(df):
@@ -39,9 +36,9 @@ def convert_df_to_excel(df):
     output.seek(0)
     return output.getvalue()
 
-def load_data(uploaded_file):
-    """Carica i dati da un file Excel caricato."""
-    return pd.read_excel(uploaded_file)
+def load_data(file_path):
+    """Carica i dati da un file Excel specificato."""
+    return pd.read_excel(file_path)
 
 st.title('Applicazione per la trasposizione e raggruppamento dei dati Excel')
 
@@ -49,9 +46,8 @@ uploaded_file = st.file_uploader("Carica il tuo file Excel", type=['xlsx'])
 if uploaded_file is not None:
     df = load_data(uploaded_file)
     if not df.empty:
-        # Aggiungi qui tutte le colonne che intendi usare come indice
-        index_columns = ['Season', 'Color', 'Style Number', 'Name']
-        df_final = pivot_sizes(df, index_columns)
+        st.write("Anteprima dei dati originali:", df)
+        df_final = pivot_sizes(df)
         st.write("Anteprima dei dati trasformati:", df_final)
         processed_data = convert_df_to_excel(df_final)
         st.download_button(
