@@ -22,6 +22,10 @@ def pivot_sizes(df):
     # Rimozione della colonna 'Image' se esiste
     if 'Image' in df.columns:
         df.drop('Image', axis=1, inplace=True)
+
+    # Rimozione della colonna 'Total Price (EUR)' se esiste
+    if 'Total Price (EUR)' in df.columns:
+        df.drop('Total Price (EUR)', axis=1, inplace=True)
     
     # Creazione del DataFrame pivotato
     df_pivot = df.pivot_table(index=["Season", "Color", "Style Number", "Name"], 
