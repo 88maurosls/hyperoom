@@ -25,11 +25,14 @@ def pivot_sizes(df):
     # Sostituzione degli zeri con NaN (o puoi usare None per null)
     df_pivot.replace({0: None}, inplace=True)
 
+    # Rimozione delle colonne delle taglie che contengono solo valori null
+    df_pivot.dropna(axis=1, how='all', inplace=True)
+
     # Ordina le colonne delle taglie mantenendo tutte quelle definite, e mettendo alla fine le non definite
     predefined_size_order = ["OS", "O/S", "ONE SIZE", "UNI", "XXXS", "XXS", "XS", "XS/S", "S", "S/M", "M", 
                              "M/L", "L", "L/XL", "XL", "XXL", "XXXL"]
     all_sizes = [col for col in df_pivot.columns if col not in df.columns.difference(['Size', 'Qty']).tolist()]
-    
+
     # Dividi le taglie in definite e non definite
     predefined_sizes = [size for size in predefined_size_order if size in all_sizes]
     undefined_sizes = [size for size in all_sizes if size not in predefined_size_order]
@@ -51,8 +54,6 @@ def pivot_sizes(df):
     df_final = df_final[ordered_columns]
 
     return df_final
-
-
 
 
 def convert_df_to_excel(df):
