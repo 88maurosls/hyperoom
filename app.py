@@ -20,23 +20,23 @@ def pivot_sizes(df):
     df_pivot = df.pivot_table(index=["Season", "Color", "Style Number", "Name"], 
                               columns='Size', 
                               values='Qty', 
-                              aggfunc='sum', 
-                              fill_value=0).reset_index()
+                              aggfunc='sum').reset_index()
 
     # Combina i nomi delle colonne multi-livello in uno
     df_pivot.columns = [' '.join(col).strip() if type(col) is tuple else col for col in df_pivot.columns.values]
 
-    # Estrazione delle colonne delle taglie dal DataFrame pivotato
-    size_columns = df_pivot.columns.difference(non_pivot_cols)
-
+    # Sostituzione degli zeri con NaN (o puoi usare None per null)
+    df_pivot.replace({0: None}, inplace=True)
+    
     # Unione del pivot con le altre colonne non pivotate mantenendo l'ordine delle colonne originale
     df_final = pd.merge(df[non_pivot_cols].drop_duplicates(), df_pivot, on=["Season", "Color", "Style Number", "Name"], how='right')
 
     # Ordina le colonne mettendo le colonne delle taglie alla fine
-    final_columns = non_pivot_cols + list(size_columns)
+    final_columns = non_pivot_cols + list(df_pivot.columns.difference(non_pivot_cols))
     df_final = df_final[final_columns]
 
     return df_final
+
 
 
 
