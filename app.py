@@ -51,7 +51,7 @@ def pivot_sizes(df):
     df_pivot.dropna(axis=1, how='all', inplace=True)
 
     # Definizione dell'ordine delle taglie
-    predefined_size_order = ["OS", "O/S", "ONE SIZE", "UNI", "XXXS", "XXS", "XS", "XS/S", "S", "S/M", "M", 
+    predefined_size_order = ["OS", "O/S", "One size", "UNI", "XXXS", "XXS", "XS", "XS/S", "S", "S/M", "M", 
                              "M/L", "L", "L/XL", "XL", "XXL", "XXXL"]
     size_columns = [col for col in df_pivot.columns if col not in df.columns]
 
