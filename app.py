@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import datetime
 from io import BytesIO
 import re
 
@@ -85,6 +86,20 @@ def pivot_sizes(df):
     df_final = df_final[final_columns]
 
     return df_final
+
+def convert_excel_dates(df):
+    """Converti i numeri seriali delle date in date leggibili nel formato 'YYYY-MM-DD'."""
+    date_columns = ['Ship Start', 'Ship End']  # Aggiungi altre colonne se necessario
+    for col in date_columns:
+        df[col] = pd.to_datetime(df[col], unit='d').dt.strftime('%Y-%m-%d')
+    return df
+
+# Aggiungi questa funzione alla catena di elaborazione dei dati prima di generare il file Excel
+df_final = convert_excel_dates(df_final)
+
+# Ora utilizza questa funzione durante la creazione del file Excel
+with pd.ExcelWriter(output, engine='openpyxl') as writer:
+    df_final.to_excel(writer, index=False, sheet_name='Sheet1', na_rep='NA', float_format="%.2f")
 
 def convert_df_to_excel(df):
     """Converti il DataFrame in un oggetto Excel e restituisci il buffer."""
