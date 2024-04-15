@@ -10,28 +10,37 @@ def clean_sizes_column(df, size_col='Size'):
 
 def pivot_sizes(df):
     """Trasforma le righe dei valori 'Size' in colonne e raggruppa i dati."""
-    # Pulizia dei valori 'Size' e preparazione per il pivot
+    # Pulizia dei valori 'Size'
     df = clean_sizes_column(df)
     
     # Identificazione delle colonne che non saranno trasformate
     non_pivot_cols = df.columns.difference(['Size', 'Qty']).tolist()
     
+    # Identificazione dell'indice per l'inserimento delle nuove colonne delle taglie
+    color_code_index = non_pivot_cols.index('Color Code') + 1 if 'Color Code' in non_pivot_cols else len(non_pivot_cols)
+    
     # Mantenimento di una copia delle colonne che non partecipano al pivot
     df_non_pivot = df[non_pivot_cols].drop_duplicates()
     
-    # Creazione di un nuovo DataFrame con i valori 'Qty' per ogni 'Size' trasposti in colonne
-    df_pivot = df.pivot_table(index=["Season", "Color", "Style Number", "Name"], 
+    # Creazione del DataFrame pivotato
+    df_pivot = df.pivot_table(index=["Season", "Color", "Color Code", "Style Number", "Name"], 
                               columns='Size', 
                               values='Qty', 
                               aggfunc='sum', 
                               fill_value=0).reset_index()
-    
-    # Unione del pivot con le altre colonne non pivotate
-    df_final = df_pivot.merge(df_non_pivot, on=["Season", "Color", "Style Number", "Name"], how='left')
 
-    # Rinomina le colonne per un formato pulito
-    df_final.columns.name = None
-    df_final.reset_index(drop=True, inplace=True)
+    # Combina i nomi delle colonne multi-livello in uno
+    df_pivot.columns = [' '.join(col).strip() if type(col) is tuple else col for col in df_pivot.columns.values]
+
+    # Estrazione delle colonne delle taglie dal DataFrame pivotato
+    size_columns = df_pivot.columns.difference(non_pivot_cols)
+    
+    # Combina le colonne non pivotate, le colonne delle taglie, e poi le altre colonne
+    df_final = df_non_pivot.merge(df_pivot, on=["Season", "Color", "Color Code", "Style Number", "Name"], how='right')
+    
+    # Ordina le colonne inserendo le colonne delle taglie dopo 'Color Code'
+    final_columns = non_pivot_cols[:color_code_index] + list(size_columns) + non_pivot_cols[color_code_index:]
+    df_final = df_final[final_columns]
     
     return df_final
 
