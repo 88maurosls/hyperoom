@@ -1,8 +1,8 @@
 import streamlit as st
 import pandas as pd
-import datetime
 from io import BytesIO
 import re
+import datetime
 
 def clean_sizes_column(df, size_col='Size'):
     """Rimuove 'Sizes' alla fine dei valori nella colonna 'Size'."""
@@ -87,31 +87,24 @@ def pivot_sizes(df):
 
     return df_final
 
-def convert_excel_dates(df):
-    """Converti i numeri seriali delle date in date leggibili nel formato 'YYYY-MM-DD'."""
-    date_columns = ['Ship Start', 'Ship End']  # Aggiungi altre colonne se necessario
-    for col in date_columns:
-        df[col] = pd.to_datetime(df[col], unit='d').dt.strftime('%Y-%m-%d')
-    return df
-
-# Aggiungi questa funzione alla catena di elaborazione dei dati prima di generare il file Excel
-df_final = convert_excel_dates(df_final)
-
-# Ora utilizza questa funzione durante la creazione del file Excel
-with pd.ExcelWriter(output, engine='openpyxl') as writer:
-    df_final.to_excel(writer, index=False, sheet_name='Sheet1', na_rep='NA', float_format="%.2f")
-
 def convert_df_to_excel(df):
     """Converti il DataFrame in un oggetto Excel e restituisci il buffer."""
     output = BytesIO()
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        df.to_excel(writer, index=False, sheet_name='Sheet1')
+        df.to_excel(writer, index=False, sheet_name='Sheet1', na_rep='NA', float_format="%.2f")
     output.seek(0)
     return output.getvalue()
 
 def load_data(file_path):
     """Carica i dati da un file Excel specificato."""
     return pd.read_excel(file_path)
+
+def convert_excel_dates(df):
+    """Converti i numeri seriali delle date in date leggibili nel formato 'YYYY-MM-DD'."""
+    date_columns = ['Ship Start', 'Ship End']  # Aggiungi altre colonne se necessario
+    for col in date_columns:
+        df[col] = pd.to_datetime(df[col], unit='d').dt.strftime('%Y-%m-%d')
+    return df
 
 st.title('Applicazione per la trasposizione e raggruppamento dei dati Excel')
 
@@ -122,6 +115,7 @@ if uploaded_file is not None:
         st.write("Anteprima dei dati originali:", df)
         df_final = pivot_sizes(df)
         st.write("Anteprima dei dati trasformati:", df_final)
+        df_final = convert_excel_dates(df_final)  # Converte le date nel formato corretto
         processed_data = convert_df_to_excel(df_final)
         st.download_button(
             label="📥 Scarica dati Excel trasformati",
