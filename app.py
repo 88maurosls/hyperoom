@@ -8,24 +8,29 @@ def clean_sizes_column(df):
     df['Size'] = df['Size'].apply(lambda x: re.sub(r'Sizes$', '', str(x).strip()))
     return df
 
-def pivot_sizes(df):
-    """Trasforma le righe dei valori 'Size' in colonne e raggruppa i dati."""
+def pivot_sizes(df, index_cols, size_col='Size', qty_col='Qty'):
+    """Trasforma le righe dei valori 'Size' in colonne e raggruppa i dati mantenendo tutte le altre colonne."""
     # Pulizia dei valori 'Size' e preparazione per il pivot
-    df = clean_sizes_column(df)
-    
-    # Creazione di un nuovo DataFrame con i valori 'Qty' per ogni 'Size' trasposti in colonne
-    df_pivot = df.pivot_table(index=["Season", "Color", "Style Number", "Name"], 
-                              columns='Size', 
-                              values='Qty', 
-                              aggfunc='sum', 
-                              fill_value=0).reset_index()
-    
-    # Rinomina le colonne per rimuovere il nome del livello superiore 'Qty'
-    df_pivot.columns.name = None  # Rimuove il nome della colonna d'indice
-    df_pivot.reset_index(inplace=True)
-    df_pivot.columns = [str(col) for col in df_pivot.columns]  # Assicura che i nomi delle colonne siano stringhe
+    df[size_col] = df[size_col].apply(lambda x: re.sub(r'Sizes$', '', str(x).strip()))
 
-    return df_pivot
+    # Salva le colonne che non devono essere trasformate in un elenco separato
+    other_cols = df.drop(columns=[size_col, qty_col]).columns.difference(index_cols)
+
+    # Creazione di un nuovo DataFrame con i valori 'Qty' per ogni 'Size' trasposti in colonne
+    df_pivot = df.pivot_table(index=index_cols, 
+                              columns=size_col, 
+                              values=qty_col, 
+                              aggfunc='sum', 
+                              fill_value=0)
+
+    # Riporta le altre colonne nel DataFrame pivotato
+    df_pivot = df_pivot.merge(df[other_cols], on=index_cols, how='left')
+
+    # Rimuove il nome del livello superiore delle colonne (nome delle colonne multi-livello)
+    df_pivot.columns = [' '.join(col).strip() if type(col) is tuple else col for col in df_pivot.columns.values]
+
+    return df_pivot.reset_index()
+
 
 def convert_df_to_excel(df):
     """Converti il DataFrame in un oggetto Excel e restituisci il buffer."""
@@ -56,5 +61,11 @@ if uploaded_file is not None:
         )
     else:
         st.error("Il DataFrame caricato è vuoto. Si prega di caricare un file con i dati.")
+        
+# All'interno del blocco 'if uploaded_file is not None:'
+index_columns = ["Season", "Color", "Style Number", "Name"]  # Aggiungi altre colonne necessarie qui se necessario
+df_final = pivot_sizes(df, index_columns)
+
+
 else:
     st.info("Attendere il caricamento di un file Excel.")
