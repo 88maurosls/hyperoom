@@ -1,19 +1,20 @@
 import streamlit as st
 import pandas as pd
 from io import BytesIO
+import re  # Importa il modulo per le espressioni regolari
 
 def clean_sizes_column(df, column_name='Sizes'):
     # Assicurati che la colonna esista nel DataFrame
     if column_name in df.columns:
-        # Rimuovi la parola "Sizes" dalla fine dei valori della colonna
-        df[column_name] = df[column_name].str.replace('Sizes', '').str.strip()
+        # Rimuovi tutte le occorrenze di "Sizes" dai valori della colonna
+        df[column_name] = df[column_name].apply(lambda x: re.sub(r'Sizes', '', str(x), flags=re.I).strip())
     return df
 
 def convert_df_to_excel(df):
     output = BytesIO()
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
         df.to_excel(writer, sheet_name='Sheet1', index=False)
-    output.seek(0)
+    output.seek(0)  # Riporta il cursore all'inizio del buffer dopo la scrittura
     return output
 
 st.title('Applicazione per l\'estrazione di dati Excel')
@@ -22,9 +23,9 @@ uploaded_file = st.file_uploader("Carica il tuo file Excel", type=['xlsx'])
 if uploaded_file is not None:
     df = pd.read_excel(uploaded_file)
     if not df.empty:
-        df = clean_sizes_column(df)  # Pulisci la colonna Sizes
+        df = clean_sizes_column(df)  # Pulisci la colonna Sizes per rimuovere "Sizes"
         st.write("Anteprima dei dati corretti:", df)
-        processed_data = convert_df_to_excel(df)  # Converti il DataFrame in Excel
+        processed_data = convert_df_to_excel(df)  # Converti il DataFrame pulito in Excel
         
         st.download_button(
             label="📥 Scarica dati Excel",
