@@ -72,7 +72,7 @@ def pivot_sizes(df):
                         on=["Season", "Color", "Style Number", "Name"], how='right')
 
     # Predefinire l'ordine delle colonne principali
-    main_cols_order = ["Season", "Color", "Style Number", "Name", "Wholesale (EUR)", 
+    main_cols_order = ["Season", "Color", "Style Number", "Color Code", "Name", "Wholesale (EUR)", 
                        "M.S.R.P. (EUR)", "Division", "Department", "Category", "Subcategory", 
                        "Product Notes", "Ship Start", "Ship End", "Prebook", "Country of Origin", 
                        "Fabric Description", "Total Price (EUR)", "Total Units"]
