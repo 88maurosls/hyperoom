@@ -89,10 +89,11 @@ def pivot_sizes(df):
 def convert_df_to_excel(df):
     """Converti il DataFrame in un oggetto Excel e restituisci il buffer."""
     output = BytesIO()
-    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+    with pd.ExcelWriter(output, engine='openpyxl', datetime_format='yyyy-mm-dd') as writer:
         df.to_excel(writer, index=False, sheet_name='Sheet1')
     output.seek(0)
     return output.getvalue()
+
 
 def load_data(file_path):
     """Carica i dati da un file Excel specificato."""
